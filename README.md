@@ -72,6 +72,6 @@ node --check web/gemini_secret.js
 
 ## Publishing to the Comfy Registry
 
-`pyproject.toml` carries the registry metadata (`PublisherId = "delcado"`). `.github/workflows/publish_action.yml` publishes automatically whenever `pyproject.toml`'s version is bumped on `main`, using the `REGISTRY_ACCESS_TOKEN` repository secret (a Comfy Registry API key for the `delcado` publisher).
+`pyproject.toml` carries the registry metadata (`PublisherId = "delcado"`). `.github/workflows/publish_action.yml` publishes automatically whenever `pyproject.toml`'s version is bumped on `main`, using the `COMFY_REGISTRY` repository secret (a Comfy Registry API key for the `delcado` publisher).
 
 API references: [NVIDIA NIM API](https://docs.api.nvidia.com/nim/reference/llm-apis), [NVIDIA model catalog](https://build.nvidia.com/models), [Gemini generateContent](https://ai.google.dev/api/generate-content), [Gemini models.list](https://ai.google.dev/api/models).
