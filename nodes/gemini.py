@@ -340,25 +340,72 @@ def generate_caption(
 class GeminiOutfitCaption:
     """Caption one outfit image and return both raw QA text and a VTON-ready prompt."""
 
+    DESCRIPTION = (
+        "Captions a single outfit reference image with Google Gemini vision models, describing only "
+        "visible clothing, footwear and accessories for virtual try-on (VTON) prompts. Returns both the "
+        f"raw QA caption and a ready-to-use VTON prompt. Needs a Gemini API key via the {DEFAULT_ENV} "
+        "environment variable or a temporary session key entered on the node."
+    )
+
     @classmethod
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "image": ("IMAGE",),
+                "image": (
+                    "IMAGE",
+                    {"tooltip": "Outfit reference photo to caption. A single image only; batches are not supported."},
+                ),
                 # Native combo stays a dropdown while the browser refresh replaces its choices.
-                "model": (_initial_model_choices(),),
-                "custom_model": ("STRING", {"default": "", "multiline": False}),
-                "api_key_env": ("STRING", {"default": DEFAULT_ENV, "multiline": False}),
-                "timeout_seconds": ("FLOAT", {"default": 120.0, "min": 1.0, "max": 600.0, "step": 1.0}),
-                "max_image_mb": ("FLOAT", {"default": 14.0, "min": 0.1, "max": 50.0, "step": 0.1}),
-                "max_tokens": ("INT", {"default": 4096, "min": 1, "max": 65536, "step": 1}),
-                "no_person_accessories": ("BOOLEAN", {"default": False}),
+                "model": (
+                    _initial_model_choices(),
+                    {
+                        "tooltip": (
+                            "Vision model to call, ranked by tested rating (🟢/🟡/🔴/⚪). Refresh via the "
+                            "node's session-key panel. Ignored when custom_model is set."
+                        )
+                    },
+                ),
+                "custom_model": (
+                    "STRING",
+                    {"default": "", "multiline": False, "tooltip": "Model ID override, used instead of the model dropdown when non-empty."},
+                ),
+                "api_key_env": (
+                    "STRING",
+                    {
+                        "default": DEFAULT_ENV,
+                        "multiline": False,
+                        "tooltip": "Environment variable holding your Gemini API key. Ignored while a session key is set on the node.",
+                    },
+                ),
+                "timeout_seconds": (
+                    "FLOAT",
+                    {"default": 120.0, "min": 1.0, "max": 600.0, "step": 1.0, "tooltip": "Maximum time to wait for the Gemini API response, in seconds."},
+                ),
+                "max_image_mb": (
+                    "FLOAT",
+                    {"default": 14.0, "min": 0.1, "max": 50.0, "step": 0.1, "tooltip": "Reject locally if the PNG-encoded image exceeds this size in MiB."},
+                ),
+                "max_tokens": (
+                    "INT",
+                    {"default": 4096, "min": 1, "max": 65536, "step": 1, "tooltip": "Maximum output tokens requested from the model for the caption."},
+                ),
+                "no_person_accessories": (
+                    "BOOLEAN",
+                    {
+                        "default": False,
+                        "tooltip": "Strip carried/personal accessories (bags, jewelry, eyewear, hats, watches) from vton_prompt; raw_caption stays untouched.",
+                    },
+                ),
             },
             "hidden": {"unique_id": "UNIQUE_ID"},
         }
 
     RETURN_TYPES = ("STRING", "STRING")
     RETURN_NAMES = ("raw_caption", "vton_prompt")
+    OUTPUT_TOOLTIPS = (
+        "Unmodified labelled caption text returned by the model (Garment pieces, Color, Material family, ...).",
+        "Caption rewritten as a VTON diffusion prompt, with an identity/pose preservation prefix.",
+    )
     FUNCTION = "caption"
     CATEGORY = "image/captioning"
 
