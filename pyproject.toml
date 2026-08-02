@@ -1,7 +1,7 @@
 [project]
 name = "comfyui-outfit-caption"
 description = "ComfyUI outfit captioning nodes for virtual try-on prompts, backed by NVIDIA NIM and Google Gemini."
-version = "1.0.0"
+version = "1.0.1"
 license = { file = "LICENSE" }
 dependencies = []
 
@@ -11,3 +11,4 @@ Repository = "https://github.com/Delcado19/comfyui-outfit-caption"
 [tool.comfy]
 PublisherId = "delcado"
 DisplayName = "Outfit Caption (NVIDIA NIM + Gemini)"
+Icon = "https://raw.githubusercontent.com/Delcado19/comfyui-outfit-caption/main/icon.png"

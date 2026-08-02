@@ -1,5 +1,7 @@
 # ComfyUI Outfit Caption
 
+![ComfyUI Outfit Caption](banner.png)
+
 Two ComfyUI nodes that each send one outfit reference image to a vision provider and return:
 
 - `raw_caption`: evidence-first outfit QA text.
