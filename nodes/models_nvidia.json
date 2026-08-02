@@ -1,0 +1,242 @@
+{
+  "benchmark_version": "1.0",
+  "excluded_models": {
+    "google/gemma-4-31b-it": "Two 2026-06-29 caption attempts timed out, including a 180-second retry limited to 256 output tokens.",
+    "microsoft/phi-3-vision-128k-instruct": "The NVIDIA endpoint returned HTTP 404 Function not found for this account.",
+    "meta/llama-4-maverick-17b-128e-instruct": "The endpoint is not available in the current region.",
+    "microsoft/phi-4-multimodal-instruct": "The endpoint is not available in the current region.",
+    "google/paligemma": "The catalog entry does not provide the normal OpenAI-compatible chat-completions model call used by this node."
+  },
+  "models": [
+    {
+      "id": "moonshotai/kimi-k2.6",
+      "model_version": "735790403",
+      "tested_model_version": "735790403",
+      "tested_at": "2026-06-29",
+      "benchmark_version": "1.0",
+      "score": 86,
+      "rating": "green",
+      "reason": "Five-image totals: 17, 17, 19, 19, and 14. Strong material and construction evidence across the set, with the chaps outfit producing the main structural omissions.",
+      "benchmark_scores": [
+        {"image": "black coated biker jacket", "total": 17},
+        {"image": "latex stockings with lace tops and heels", "total": 17},
+        {"image": "green latex dress with lace yoke", "total": 19},
+        {"image": "red stretch-leather jumpsuit with belt and heels", "total": 19},
+        {"image": "sheer latex bodysuit with chaps and gloves", "total": 14}
+      ]
+    },
+    {
+      "id": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
+      "model_version": "735790403",
+      "tested_model_version": "735790403",
+      "tested_at": "2026-06-29",
+      "benchmark_version": "1.0",
+      "score": 84,
+      "rating": "green",
+      "reason": "Five-image totals: 19, 18, 18, 15, and 14. Consistently strong on materials and visible construction; footwear and the chaps outfit caused most deductions.",
+      "benchmark_scores": [
+        {"image": "black coated biker jacket", "total": 19},
+        {"image": "latex stockings with lace tops and heels", "total": 18},
+        {"image": "green latex dress with lace yoke", "total": 18},
+        {"image": "red stretch-leather jumpsuit with belt and heels", "total": 15},
+        {"image": "sheer latex bodysuit with chaps and gloves", "total": 14}
+      ]
+    },
+    {
+      "id": "minimaxai/minimax-m3",
+      "model_version": "735790403",
+      "tested_model_version": "735790403",
+      "tested_at": "2026-06-29",
+      "benchmark_version": "1.0",
+      "score": 80,
+      "rating": "green",
+      "reason": "Five-image totals: 15, 18, 20, 12, and 15. Excellent on the green dress and stockings, but it split or simplified important structure in the red and chaps outfits.",
+      "benchmark_scores": [
+        {"image": "black coated biker jacket", "total": 15},
+        {"image": "latex stockings with lace tops and heels", "total": 18},
+        {"image": "green latex dress with lace yoke", "total": 20},
+        {"image": "red stretch-leather jumpsuit with belt and heels", "total": 12},
+        {"image": "sheer latex bodysuit with chaps and gloves", "total": 15}
+      ]
+    },
+    {
+      "id": "nvidia/nemotron-nano-12b-v2-vl",
+      "model_version": "735790403",
+      "tested_model_version": "735790403",
+      "tested_at": "2026-06-29",
+      "benchmark_version": "1.0",
+      "score": 67,
+      "rating": "yellow",
+      "reason": "Five-image totals: 12, 14, 14, 13, and 14. Generally usable and concise, but construction, coverage, and footwear details were often incomplete or over-simplified.",
+      "benchmark_scores": [
+        {"image": "black coated biker jacket", "total": 12},
+        {"image": "latex stockings with lace tops and heels", "total": 14},
+        {"image": "green latex dress with lace yoke", "total": 14},
+        {"image": "red stretch-leather jumpsuit with belt and heels", "total": 13},
+        {"image": "sheer latex bodysuit with chaps and gloves", "total": 14}
+      ]
+    },
+    {
+      "id": "nvidia/llama-3.1-nemotron-nano-vl-8b-v1",
+      "model_version": "735790403",
+      "tested_model_version": "735790403",
+      "tested_at": "2026-06-29",
+      "benchmark_version": "1.0",
+      "score": 65,
+      "rating": "yellow",
+      "reason": "Five-image totals: 13, 15, 13, 12, and 12. Useful at identifying the main outfit family, but too terse for reliable construction and footwear transfer details.",
+      "benchmark_scores": [
+        {"image": "black coated biker jacket", "total": 13},
+        {"image": "latex stockings with lace tops and heels", "total": 15},
+        {"image": "green latex dress with lace yoke", "total": 13},
+        {"image": "red stretch-leather jumpsuit with belt and heels", "total": 12},
+        {"image": "sheer latex bodysuit with chaps and gloves", "total": 12}
+      ]
+    },
+    {
+      "id": "meta/llama-3.2-11b-vision-instruct",
+      "model_version": "735790403",
+      "tested_model_version": "735790403",
+      "tested_at": "2026-06-27",
+      "benchmark_version": "1.0",
+      "score": 57,
+      "rating": "red",
+      "reason": "Five-image totals: 14, 8, 15, 14, and 6. It returned final text for every image but confused stockings and chaps, missed visible footwear, and invented closures or construction.",
+      "benchmark_scores": [
+        {
+          "image": "black coated biker jacket",
+          "garment_coverage": 3,
+          "color_material": 3,
+          "construction": 2,
+          "footwear_accessories": 4,
+          "hallucination_avoidance": 2,
+          "total": 14
+        },
+        {
+          "image": "latex stockings with lace tops and heels",
+          "garment_coverage": 2,
+          "color_material": 3,
+          "construction": 1,
+          "footwear_accessories": 1,
+          "hallucination_avoidance": 1,
+          "total": 8
+        },
+        {
+          "image": "green latex dress with lace yoke",
+          "garment_coverage": 4,
+          "color_material": 3,
+          "construction": 2,
+          "footwear_accessories": 4,
+          "hallucination_avoidance": 2,
+          "total": 15
+        },
+        {
+          "image": "red stretch-leather jumpsuit with belt and heels",
+          "garment_coverage": 4,
+          "color_material": 3,
+          "construction": 3,
+          "footwear_accessories": 2,
+          "hallucination_avoidance": 2,
+          "total": 14
+        },
+        {
+          "image": "sheer latex bodysuit with chaps and gloves",
+          "garment_coverage": 2,
+          "color_material": 2,
+          "construction": 1,
+          "footwear_accessories": 0,
+          "hallucination_avoidance": 1,
+          "total": 6
+        }
+      ]
+    },
+    {
+      "id": "mistralai/mistral-large-3-675b-instruct-2512",
+      "model_version": "735790403",
+      "tested_model_version": "735790403",
+      "tested_at": "2026-06-29",
+      "benchmark_version": "1.0",
+      "score": 43,
+      "rating": "red",
+      "reason": "Five-image totals: 10, 5, 9, 15, and 4. Verbose output frequently invented garment structure, seams, straps, and footwear; the chaps result was especially inaccurate.",
+      "benchmark_scores": [
+        {"image": "black coated biker jacket", "total": 10},
+        {"image": "latex stockings with lace tops and heels", "total": 5},
+        {"image": "green latex dress with lace yoke", "total": 9},
+        {"image": "red stretch-leather jumpsuit with belt and heels", "total": 15},
+        {"image": "sheer latex bodysuit with chaps and gloves", "total": 4}
+      ]
+    },
+    {
+      "id": "mistralai/ministral-14b-instruct-2512",
+      "model_version": "735790403",
+      "tested_model_version": "735790403",
+      "tested_at": "2026-06-29",
+      "benchmark_version": "1.0",
+      "score": 43,
+      "rating": "red",
+      "reason": "Five-image totals: 8, 7, 13, 9, and 6. It repeatedly misread garment length, cut, closures, and footwear despite often recognizing the broad material family.",
+      "benchmark_scores": [
+        {"image": "black coated biker jacket", "total": 8},
+        {"image": "latex stockings with lace tops and heels", "total": 7},
+        {"image": "green latex dress with lace yoke", "total": 13},
+        {"image": "red stretch-leather jumpsuit with belt and heels", "total": 9},
+        {"image": "sheer latex bodysuit with chaps and gloves", "total": 6}
+      ]
+    },
+    {
+      "id": "meta/llama-3.2-90b-vision-instruct",
+      "model_version": "735790403",
+      "tested_model_version": "735790403",
+      "tested_at": "2026-06-29",
+      "benchmark_version": "1.0",
+      "score": 32,
+      "rating": "red",
+      "reason": "Five-image totals: 0, 8, 16, 8, and 0. One image failed, the chaps image was refused, and successful responses still made major garment and footwear errors.",
+      "benchmark_scores": [
+        {"image": "black coated biker jacket", "total": 0},
+        {"image": "latex stockings with lace tops and heels", "total": 8},
+        {"image": "green latex dress with lace yoke", "total": 16},
+        {"image": "red stretch-leather jumpsuit with belt and heels", "total": 8},
+        {"image": "sheer latex bodysuit with chaps and gloves", "total": 0}
+      ]
+    },
+    {
+      "id": "mistralai/mistral-small-4-119b-2603",
+      "model_version": "735790403",
+      "tested_model_version": "735790403",
+      "tested_at": "2026-06-29",
+      "benchmark_version": "1.0",
+      "score": 28,
+      "rating": "red",
+      "reason": "Five-image totals: 4, 5, 9, 7, and 3. It frequently replaced the visible garments and footwear with unrelated silhouettes and construction details.",
+      "benchmark_scores": [
+        {"image": "black coated biker jacket", "total": 4},
+        {"image": "latex stockings with lace tops and heels", "total": 5},
+        {"image": "green latex dress with lace yoke", "total": 9},
+        {"image": "red stretch-leather jumpsuit with belt and heels", "total": 7},
+        {"image": "sheer latex bodysuit with chaps and gloves", "total": 3}
+      ]
+    },
+    {
+      "id": "google/gemma-4-31b-it",
+      "model_version": "735790403",
+      "tested_model_version": null,
+      "tested_at": null,
+      "benchmark_version": null,
+      "score": null,
+      "rating": "untested",
+      "reason": "The first benchmark image exceeded three minutes without a usable response. A 2026-06-29 retry with only 256 output tokens also timed out after 180 seconds; the full v1.0 benchmark was not completed."
+    },
+    {
+      "id": "microsoft/phi-3-vision-128k-instruct",
+      "model_version": "735790403",
+      "tested_model_version": null,
+      "tested_at": null,
+      "benchmark_version": null,
+      "score": null,
+      "rating": "untested",
+      "reason": "The NVIDIA API returned HTTP 404 Function not found for this account, so the v1.0 benchmark could not start."
+    }
+  ]
+}

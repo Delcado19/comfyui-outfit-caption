@@ -1,0 +1,55 @@
+{
+  "benchmark_version": "1.0",
+  "models": [
+    {
+      "id": "gemini-2.5-flash",
+      "model_version": "001",
+      "tested_model_version": "001",
+      "tested_at": "2026-06-29",
+      "benchmark_version": "1.0",
+      "score": 93,
+      "rating": "green",
+      "reason": "The complete five-image benchmark scored 93/100, tied for first place across the tested Gemini and NVIDIA candidates."
+    },
+    {
+      "id": "gemini-3-flash-preview",
+      "model_version": "gemini-3-flash-preview",
+      "tested_model_version": null,
+      "tested_at": null,
+      "benchmark_version": null,
+      "score": null,
+      "rating": "untested",
+      "reason": "Known multimodal Gemini model; outfit-caption benchmark pending."
+    },
+    {
+      "id": "gemini-2.5-pro",
+      "model_version": "gemini-2.5-pro",
+      "tested_model_version": null,
+      "tested_at": null,
+      "benchmark_version": null,
+      "score": null,
+      "rating": "untested",
+      "reason": "Known multimodal Gemini model; outfit-caption benchmark pending."
+    },
+    {
+      "id": "gemini-3.5-flash",
+      "model_version": "3.5-flash-05-2026",
+      "tested_model_version": "3.5-flash-05-2026",
+      "tested_at": "2026-06-29",
+      "benchmark_version": "1.0",
+      "score": 93,
+      "rating": "green",
+      "reason": "The complete five-image benchmark scored 93/100, tied for first place across the tested Gemini and NVIDIA candidates."
+    },
+    {
+      "id": "gemini-2.5-flash-lite",
+      "model_version": "gemini-2.5-flash-lite",
+      "tested_model_version": null,
+      "tested_at": null,
+      "benchmark_version": null,
+      "score": null,
+      "rating": "untested",
+      "reason": "Known multimodal Gemini model; outfit-caption benchmark pending."
+    }
+  ]
+}
