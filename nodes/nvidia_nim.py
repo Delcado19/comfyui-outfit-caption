@@ -17,9 +17,6 @@ from PIL import Image
 
 DEFAULT_ENV = "NVIDIA_API_KEY_COMFYUI"
 MODEL_LIST_URL = "https://integrate.api.nvidia.com/v1/models"
-IMAGE_MODEL_CATALOG_URL = (
-    "https://build.nvidia.com/models?filters=usecase%3Ausecase_image_to_text"
-)
 GENERATE_URL = "https://integrate.api.nvidia.com/v1/chat/completions"
 CATALOG_PATH = Path(__file__).with_name("models_nvidia.json")
 _CACHE_ROOT = Path(os.environ.get("LOCALAPPDATA", Path.home() / ".cache"))
@@ -131,31 +128,6 @@ def fetch_model_list(api_key: str, timeout: float = 15.0) -> list[dict[str, str]
     ]
 
 
-def _parse_image_model_names(page: str) -> list[str]:
-    # NVIDIA embeds the filtered catalog as escaped JSON in the server-rendered page.
-    pattern = r'\\"resourceType\\":\\"ENDPOINT\\".*?\\"name\\":\\"([^\\"]+)\\"'
-    return list(dict.fromkeys(re.findall(pattern, page, re.S)))
-
-
-def fetch_image_model_names(timeout: float = 15.0) -> list[str]:
-    # ponytail: scraping build.nvidia.com is fragile, but /v1/models carries no
-    # modality field (verified: only id/object/created/owned_by), so this page is
-    # the sole Image-to-Text source. Switch to a JSON API if NVIDIA ever ships one.
-    request = urllib.request.Request(
-        IMAGE_MODEL_CATALOG_URL,
-        headers={"Accept": "text/html", "User-Agent": "ComfyUI-NVIDIA-NIM-Outfit-Caption/1"},
-    )
-    try:
-        with urllib.request.urlopen(request, timeout=timeout) as response:
-            page = response.read().decode("utf-8", errors="replace")
-    except (urllib.error.HTTPError, urllib.error.URLError, TimeoutError) as exc:
-        raise RuntimeError(f"NVIDIA catalog request failed: {_sanitize_error(exc)}") from exc
-    names = _parse_image_model_names(page)
-    if not names:
-        raise RuntimeError("NVIDIA catalog response contained no Image-to-Text endpoints.")
-    return names
-
-
 def _effective_rating(entry: dict, live_version: str) -> tuple[str, int | None]:
     rating = entry.get("rating", "untested")
     tested_version = entry.get("tested_model_version")
@@ -165,24 +137,33 @@ def _effective_rating(entry: dict, live_version: str) -> tuple[str, int | None]:
     return rating, score if isinstance(score, int) else None
 
 
-def _is_official_image_model(model_id: str, image_model_names: set[str]) -> bool:
+def _is_likely_image_model(model_id: str) -> bool:
+    # ponytail: build.nvidia.com's AWS WAF requires JavaScript; urllib receives a
+    # challenge shell, so the old HTML scrape cannot be repaired with a regex.
+    # Naming is imprecise: failed probes drop false positives; names like kimi-k3
+    # are missed. Use custom_model or add benchmarked catalog entries for misses;
+    # replace the heuristic if NVIDIA provides documented modality metadata.
     slug = model_id.split("/", 1)[-1]
-    return slug in image_model_names or model_id.replace("/", "-") in image_model_names
+    return re.search(
+        r"(?:^|[-_.])(?:vision|vl|vlm|omni|multimodal|caption|clip|image|visual)(?:$|[-_.])",
+        slug, re.I,
+    ) is not None
 
 
 def rank_models(
-    catalog: dict, live_models: list[dict], image_model_names: list[str] | None = None
+    catalog: dict, live_models: list[dict], *, verified: bool = False
 ) -> list[dict]:
     catalog_by_id = {entry["id"]: entry for entry in catalog.get("models", [])}
     excluded = set(catalog.get("excluded_models", {}))
-    official = set(image_model_names or [])
     ranked = []
     for live_entry in live_models:
         model_id = str(live_entry.get("id") or "")
         if not model_id or model_id in excluded:
             continue
         entry = catalog_by_id.get(model_id)
-        if entry is None and not _is_official_image_model(model_id, official):
+        # Naming only shortlists new live candidates; verified cache entries have
+        # already passed a probe, including entries from the former scraper.
+        if entry is None and not verified and not _is_likely_image_model(model_id):
             continue
         entry = entry or {"id": model_id, "rating": "untested", "score": None}
         rating, score = _effective_rating(entry, str(live_entry.get("version") or ""))
@@ -206,18 +187,17 @@ def _read_cache() -> dict:
         verified = payload.get("verified") is True
         return {
             "models": payload.get("models", []) if verified else [],
-            "image_model_names": payload.get("image_model_names", []) if verified else [],
             "verified": verified,
         }
     except (OSError, json.JSONDecodeError):
-        return {"models": [], "image_model_names": [], "verified": False}
+        return {"models": [], "verified": False}
 
 
-def _write_cache(models: list[dict], image_model_names: list[str]) -> None:
+def _write_cache(models: list[dict]) -> None:
     CACHE_PATH.parent.mkdir(parents=True, exist_ok=True)
     CACHE_PATH.write_text(
         json.dumps(
-            {"models": models, "image_model_names": image_model_names, "verified": True},
+            {"models": models, "verified": True},
             indent=2,
         ),
         encoding="utf-8",
@@ -258,8 +238,7 @@ def _probe_model(model_id: str, api_key: str, timeout: float) -> None:
 def available_models(api_key: str, timeout: float = 15.0) -> dict:
     try:
         live = fetch_model_list(api_key, timeout)
-        image_model_names = fetch_image_model_names(timeout)
-        candidates = rank_models(load_catalog(), live, image_model_names)
+        candidates = rank_models(load_catalog(), live)
         probe_errors = {}
         verified_ids = set()
         for item in candidates:
@@ -269,7 +248,7 @@ def available_models(api_key: str, timeout: float = 15.0) -> dict:
             except Exception as exc:
                 probe_errors[item["id"]] = _sanitize_error(exc, api_key)
         verified_live = [item for item in live if item["id"] in verified_ids]
-        _write_cache(verified_live, image_model_names)
+        _write_cache(verified_live)
         return {
             "models": [item for item in candidates if item["id"] in verified_ids],
             "stale": False,
@@ -280,7 +259,7 @@ def available_models(api_key: str, timeout: float = 15.0) -> dict:
         cached = _read_cache()
         return {
             "models": rank_models(
-                load_catalog(), cached["models"], cached["image_model_names"]
+                load_catalog(), cached["models"], verified=True
             ),
             "stale": True,
             "error": _sanitize_error(exc, api_key),
@@ -292,7 +271,7 @@ def _initial_model_choices() -> list[str]:
     cached = _read_cache()
     choices = [
         item["label"]
-        for item in rank_models(load_catalog(), cached["models"], cached["image_model_names"])
+        for item in rank_models(load_catalog(), cached["models"], verified=True)
     ]
     return choices or [CUSTOM_MODEL]
 
@@ -616,7 +595,7 @@ if _prompt_server is not None:
         if not resolved_key:
             cache = _read_cache()
             cached = rank_models(
-                load_catalog(), cache["models"], cache["image_model_names"]
+                load_catalog(), cache["models"], verified=True
             )
             return web.json_response(
                 {"models": cached, "stale": True, "error": f"Enter a session key or set {env_name}."}

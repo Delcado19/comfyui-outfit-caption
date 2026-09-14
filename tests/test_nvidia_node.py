@@ -108,25 +108,87 @@ Preserve the shirt seams and black skirt. Crucially, preserve the extreme platfo
             {"id": "vendor/new-vision", "version": "1"},
             {"id": "blocked", "version": "1"},
         ]
-        ranked = MODULE.rank_models(catalog, live, ["new-vision", "blocked"])
+        ranked = MODULE.rank_models(catalog, live)
         self.assertEqual(
             ["green-high", "green-low", "yellow", "changed", "vendor/new-vision"],
             [item["id"] for item in ranked],
         )
         self.assertEqual("untested", ranked[-1]["rating"])
 
-    def test_live_catalog_parser_deduplicates_embedded_endpoint_names(self):
-        page = (
-            r'\"resourceType\":\"ENDPOINT\",\"name\":\"kimi-k2.6\" '
-            r'\"resourceType\":\"ENDPOINT\",\"name\":\"google-paligemma\" '
-            r'\"resourceType\":\"ENDPOINT\",\"name\":\"kimi-k2.6\"'
-        )
-        self.assertEqual(
-            ["kimi-k2.6", "google-paligemma"], MODULE._parse_image_model_names(page)
-        )
-        self.assertTrue(
-            MODULE._is_official_image_model("google/paligemma", {"google-paligemma"})
-        )
+    def test_vision_heuristic_uses_model_segments_not_vendor_or_family(self):
+        for slug in ("vision", "vl-model", "model-vl", "model-vl-8b", "model_VLM_1",
+                     "model-omni", "multimodal", "caption", "clip", "image", "visual"):
+            with self.subTest(slug=slug):
+                self.assertTrue(MODULE._is_likely_image_model("vendor/" + slug))
+        for model_id in ("vision/text-model", "vendor/revision", "vendor/developer",
+                         "moonshotai/kimi-k3", "google/paligemma"):
+            with self.subTest(model_id=model_id):
+                self.assertFalse(MODULE._is_likely_image_model(model_id))
+        self.assertEqual("moonshotai/kimi-k3", MODULE.resolve_model(MODULE.CUSTOM_MODEL,
+                                                                  "moonshotai/kimi-k3"))
+
+    def test_refresh_uses_only_api_and_drops_dead_known_entitlements(self):
+        live_ids = ["moonshotai/kimi-k2.6", "known/plain-name", "vendor/new-vision",
+                    "vendor/bad-vl", "vendor/text-only", "moonshotai/kimi-k3",
+                    "vendor/blocked-vision"]
+        catalog = {"models": [{"id": model_id} for model_id in live_ids[:2]],
+                   "excluded_models": {"vendor/blocked-vision": "Excluded"}}
+        probed = []
+
+        def urlopen(request, timeout):
+            if request.full_url == MODULE.MODEL_LIST_URL:
+                payload = {"data": [{"id": model_id, "created": 1} for model_id in live_ids]}
+            elif request.full_url == MODULE.GENERATE_URL:
+                model_id = json.loads(request.data)["model"]
+                probed.append(model_id)
+                if model_id in ("moonshotai/kimi-k2.6", "vendor/bad-vl"):
+                    raise MODULE.urllib.error.HTTPError(request.full_url, 404, "Not found", {},
+                                                        MODULE.io.BytesIO(b"dead entitlement"))
+                payload = {"choices": [{"message": {"content": "OK"}}]}
+            else:
+                raise AssertionError("Unexpected request: " + request.full_url)
+            response = mock.MagicMock()
+            response.__enter__.return_value.read.return_value = json.dumps(payload).encode()
+            return response
+
+        with tempfile.TemporaryDirectory() as directory:
+            cache = Path(directory) / "models.json"
+            cache.write_text(json.dumps({"verified": True, "models": [
+                {"id": "moonshotai/kimi-k2.6", "version": "1"}]}), encoding="utf-8")
+            with mock.patch.object(MODULE, "CACHE_PATH", cache), \
+                mock.patch.object(MODULE, "load_catalog", return_value=catalog), \
+                mock.patch.object(MODULE.urllib.request, "urlopen", side_effect=urlopen), \
+                mock.patch.object(MODULE, "_read_cache", side_effect=AssertionError("Stale fallback")):
+                result = MODULE.available_models("secret")
+                cached = json.loads(cache.read_text(encoding="utf-8"))
+        self.assertEqual(live_ids[:4], probed)
+        self.assertFalse(result["stale"])
+        self.assertEqual("", result["error"])
+        self.assertEqual(["known/plain-name", "vendor/new-vision"],
+                         [item["id"] for item in result["models"]])
+        self.assertEqual({"moonshotai/kimi-k2.6", "vendor/bad-vl"}, set(result["probe_errors"]))
+        self.assertTrue(cached["verified"])
+        self.assertEqual(["known/plain-name", "vendor/new-vision"],
+                         [item["id"] for item in cached["models"]])
+        self.assertNotIn("image_model_names", cached)
+
+    def test_old_verified_cache_survives_without_heuristic_match(self):
+        with tempfile.TemporaryDirectory() as directory:
+            cache = Path(directory) / "models.json"
+            for verified in (True, False):
+                with self.subTest(verified=verified):
+                    cache.write_text(json.dumps({"models": [{"id": "vendor/plain-name"}],
+                                                 "image_model_names": ["plain-name"],
+                                                 "verified": verified}), encoding="utf-8")
+                    with mock.patch.object(MODULE, "CACHE_PATH", cache), \
+                        mock.patch.object(MODULE, "fetch_model_list", side_effect=TimeoutError()):
+                        result = MODULE.available_models("secret")
+                        choices = MODULE._initial_model_choices()
+                    self.assertTrue(result["stale"])
+                    self.assertEqual(["vendor/plain-name"] if verified else [],
+                                     [item["id"] for item in result["models"]])
+                    self.assertEqual([item["label"] for item in result["models"]]
+                                     if verified else [MODULE.CUSTOM_MODEL], choices)
 
     def test_provider_failure_uses_stale_cache_without_changing_rating(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -167,7 +229,6 @@ Preserve the shirt seams and black skirt. Crucially, preserve the extreme platfo
             cache = Path(directory) / "models.json"
             with mock.patch.object(MODULE, "CACHE_PATH", cache), \
                 mock.patch.object(MODULE, "fetch_model_list", return_value=live), \
-                mock.patch.object(MODULE, "fetch_image_model_names", return_value=["good-vision", "bad-vision"]), \
                 mock.patch.object(MODULE, "load_catalog", return_value={"models": []}), \
                 mock.patch.object(MODULE, "_probe_model", side_effect=probe):
                 result = MODULE.available_models("secret")
